@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian 数学公式编辑器</title>
+
+<!-- MathJax -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+<style>
+/* ========== 主题变量 ========== */
+:root[data-theme="light"] {
+  --bg: #fdfbf7;
+  --bg-elevated: #f5f0e8;
+  --bg-input: #ffffff;
+  --bg-hover: #efe9df;
+  --bg-keyboard: #f8f4ed;
+  --bg-key: #ffffff;
+  --bg-key-hover: #f0ebe1;
+  --text: #1a1a2e;
+  --text-secondary: #5a5045;
+  --text-muted: #9a8f80;
+  --border: #d9d0c0;
+  --border-light: #e8e0d0;
+  --accent: #6b5b4a;
+  --accent-hover: #5a4a3a;
+  --accent-text: #fdfbf7;
+  --danger: #b85450;
+  --danger-hover: #a04440;
+  --success: #5a7a4a;
+  --shadow: 0 1px 3px rgba(90, 80, 69, 0.08);
+  --shadow-lg: 0 4px 12px rgba(90, 80, 69, 0.12);
+  --font-serif: Georgia, 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --bg-elevated: #141414;
+  --bg-input: #0f0f0f;
+  --bg-hover: #1a1a1a;
+  --bg-keyboard: #0d0d0d;
+  --bg-key: #1a1a1a;
+  --bg-key-hover: #252525;
+  --text: #e4e4e7;
+  --text-secondary: #a1a1aa;
+  --text-muted: #6b6b70;
+  --border: #27272a;
+  --border-light: #1e1e22;
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-text: #0a0a0a;
+  --danger: #f87171;
+  --danger-hover: #fca5a5;
+  --success: #4ade80;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --font-serif: Georgia, 'Noto Serif SC', serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'JetBrains Mono', 'Roboto Mono', Consolas, monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ========== 基础 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  transition: background 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ========== 顶部工具栏 ========== */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--accent);
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.tool-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.tool-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 下拉菜单 */
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  max-height: 380px;
+  overflow-y: auto;
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+
+.dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-header {
+  padding: 10px 14px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0 6px;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-item-latex {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-item-preview {
+  font-family: var(--font-serif);
+  color: var(--accent);
+  font-size: 15px;
+  margin-right: 8px;
+}
+
+.dropdown-item-delete {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: var(--text-muted);
+}
+
+.dropdown-item:hover .dropdown-item-delete {
+  opacity: 1;
+}
+
+.dropdown-item-delete:hover {
+  color: var(--danger);
+  background: var(--bg-hover);
+}
+
+.dropdown-item-delete svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 4px 10px;
+}
+
+.dropdown-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0 6px 6px;
+}
+
+.dropdown-add-btn:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-add-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* 帮助弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  max-width: 540px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 28px 32px;
+  transform: scale(0.96);
+  transition: transform 0.2s;
+}
+
+.modal-overlay.open .modal {
+  transform: scale(1);
+}
+
+.modal-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.modal-section {
+  margin-bottom: 18px;
+}
+
+.modal-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.modal-section p, .modal-section li {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.modal-section ul {
+  padding-left: 18px;
+}
+
+.modal-section li {
+  margin-bottom: 4px;
+}
+
+.modal-section code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-hover);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--text);
+}
+
+/* 快捷键列表 */
+.shortcut-list {
+  list-style: none !important;
+  padding: 0 !important;
+}
+
+.shortcut-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* 快捷键设置弹窗 */
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.shortcut-row:last-child {
+  border-bottom: none;
+}
+
+.shortcut-label {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.shortcut-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shortcut-key-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  min-width: 120px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  height: 32px;
+}
+
+.shortcut-key-box:hover {
+  border-color: var(--accent);
+}
+
+.shortcut-key-box.recording {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 107,91,74), 0.15);
+}
+
+.shortcut-key-box.conflict {
+  border-color: var(--danger);
+  background: rgba(184, 84, 80, 0.08);
+}
+
+.shortcut-key-box .placeholder {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.shortcut-conflict-msg {
+  font-size: 11px;
+  color: var(--danger);
+  margin-top: 4px;
+  display: none;
+}
+
+.shortcut-conflict-msg.show {
+  display: block;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.modal-close svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+/* 添加公式弹窗 */
+.add-formula-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.add-formula-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* 公式预览区 */
+.formula-preview-section {
+  margin-bottom: 16px;
+}
+
+.formula-preview-box {
+  padding: 16px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: auto;
+  font-size: 1.1em;
+}
+
+.formula-preview-box:empty::before {
+  content: '输入 LaTeX 代码后此处显示预览';
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.formula-preview-box mjx-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.add-formula-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.btn-primary {
+  padding: 7px 16px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  padding: 7px 16px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+/* ========== 主区域 ========== */
+.main-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.editor-pane, .preview-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-pane {
+  border-right: 1px solid var(--border);
+}
+
+.pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 36px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.pane-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pane-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* 模式切换 */
+.mode-toggle {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+
+.mode-btn {
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-btn:hover {
+  color: var(--text);
+}
+
+.mode-btn.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.pane-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.pane-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.pane-btn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pane-btn.danger:hover {
+  color: var(--danger);
+}
+
+/* 输入框 */
+.input-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+#latex-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 20px 24px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+#latex-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* 预览区 */
+.preview-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 28px 32px;
+  background: var(--bg-input);
+}
+
+#preview-content {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+#preview-content mjx-container {
+  color: var(--text) !important;
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.preview-empty svg {
+  width: 48px;
+  height: 48px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+}
+
+.preview-empty p {
+  font-size: 14px;
+  font-family: var(--font-serif);
+}
+
+.preview-error {
+  color: var(--danger);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  padding: 12px 16px;
+  background: rgba(184, 84, 80, 0.08);
+  border: 1px solid rgba(184, 84, 80, 0.2);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* ========== 虚拟键盘 ========== */
+.keyboard {
+  background: var(--bg-keyboard);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  max-height: 280px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.keyboard.collapsed {
+  max-height: 40px;
+}
+
+.keyboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 40px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  user-select: none;
+}
+
+.keyboard.collapsed .keyboard-header {
+  border-bottom: none;
+}
+
+.keyboard-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.keyboard-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.kb-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.kb-tab:hover {
+  color: var(--text-secondary);
+}
+
+.kb-tab.active {
+  background: var(--bg-key);
+  color: var(--accent);
+}
+
+.kb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+
+.kb-toggle:hover {
+  color: var(--text);
+}
+
+.kb-toggle svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: transform 0.25s;
+}
+
+.keyboard.collapsed .kb-toggle svg {
+  transform: rotate(180deg);
+}
+
+.keyboard-body {
+  padding: 10px 16px 14px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.kb-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kb-key {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  background: var(--bg-key);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-family: var(--font-serif);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+  position: relative;
+}
+
+.kb-key:hover {
+  background: var(--bg-key-hover);
+  border-color: var(--border);
+}
+
+.kb-key:active {
+  transform: scale(0.94);
+}
+
+.kb-key .key-label {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.kb-key .key-sub {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ========== Toast ========== */
+.toast {
+  position: fixed;
+  bottom: 300px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ========== 滚动条 ========== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+  .main-area {
+    flex-direction: column;
+  }
+  .editor-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo span:last-child {
+    display: none;
+  }
+  .tool-btn span {
+    display: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部工具栏 -->
+<header class="toolbar" role="banner">
+  <div class="toolbar-left">
+    <div class="logo">
+      <span class="logo-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h10"/>
+          <path d="M18 15l3 3-3 3" stroke-width="1.5"/>
+        </svg>
+      </span>
+      <span>数学公式编辑器</span>
+    </div>
+  </div>
+  <div class="toolbar-right">
+    <button class="tool-btn" id="btn-theme" aria-label="切换主题">
+      <svg viewBox="0 0 24 24" aria-hidden="true" id="theme-icon">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+      </svg>
+      <span>主题</span>
+    </button>
+    <button class="tool-btn" id="btn-formulas" aria-label="常用公式">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+        <path d="M7 4l-2 8M17 4l-2 8" stroke-width="1.5"/>
+      </svg>
+      <span>常用公式</span>
+    </button>
+    <button class="tool-btn" id="btn-help" aria-label="帮助">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <span>帮助</span>
+    </button>
+    <button class="tool-btn" id="btn-settings" aria-label="快捷键设置">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span>快捷键</span>
+    </button>
+    <!-- 下拉菜单 -->
+    <div class="dropdown" id="formulas-dropdown">
+      <div class="dropdown-header">预设公式</div>
+      <div id="preset-formulas-list"></div>
+      <div class="dropdown-divider"></div>
+      <div class="dropdown-header">自定义公式</div>
+      <div id="custom-formulas-list"></div>
+      <div class="dropdown-divider"></div>
+      <button class="dropdown-add-btn" id="btn-add-formula">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        添加自定义公式
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 主区域 -->
+<main class="main-area">
+  <!-- 输入区 -->
+  <section class="editor-pane" aria-label="LaTeX 输入">
+    <div class="pane-header">
+      <span class="pane-label">LaTeX 源码</span>
+      <div class="pane-actions">
+        <div class="mode-toggle" id="mode-toggle" role="group" aria-label="公式模式">
+          <button class="mode-btn active" data-mode="inline" title="行内公式 $...$">$</button>
+          <button class="mode-btn" data-mode="display" title="行间公式 $$...$$">$$</button>
+        </div>
+        <button class="pane-btn" id="btn-copy" title="复制公式">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          复制
+        </button>
+        <button class="pane-btn" id="btn-save-formula" title="收藏当前公式到常用公式">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+          收藏
+        </button>
+        <button class="pane-btn danger" id="btn-clear" title="清空输入">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+          </svg>
+          清空
+        </button>
+      </div>
+    </div>
+    <div class="input-wrap">
+      <textarea id="latex-input" placeholder="在此输入 LaTeX 公式..." spellcheck="false" autocomplete="off"></textarea>
+    </div>
+  </section>
+
+  <!-- 预览区 -->
+  <section class="preview-pane" aria-label="公式预览">
+    <div class="pane-header">
+      <span class="pane-label">实时预览</span>
+    </div>
+    <div class="preview-wrap" id="preview-wrap">
+      <div class="preview-empty" id="preview-empty">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7l4-4h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/>
+          <path d="M8 3v4h12M8 13h8M8 17h5"/>
+        </svg>
+        <p>在左侧输入 LaTeX，公式将在此实时渲染</p>
+      </div>
+      <div id="preview-content" style="display:none;"></div>
+    </div>
+  </section>
+</main>
+
+<!-- 虚拟键盘 -->
+<footer class="keyboard" id="keyboard" role="contentinfo">
+  <div class="keyboard-header" id="kb-header">
+    <div class="keyboard-tabs" id="kb-tabs"></div>
+    <button class="kb-toggle" id="kb-toggle" aria-label="折叠键盘">
+      <span>收起</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+  </div>
+  <div class="keyboard-body" id="kb-body">
+    <div class="kb-grid" id="kb-grid"></div>
+  </div>
+</footer>
+
+<!-- 帮助弹窗 -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" id="help-close" aria-label="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <h2 class="modal-title">使用帮助</h2>
+    <div class="modal-section">
+      <h4>基本用法</h4>
+      <ul>
+        <li>在左侧输入框中键入 LaTeX 公式，右侧将实时渲染预览。</li>
+        <li>点击底部虚拟键盘的符号，可将对应 LaTeX 代码插入到光标位置。</li>
+        <li>点击「复制」按钮，公式将复制到剪贴板，可直接粘贴到 Obsidian。</li>
+        <li>通过输入框标题栏的 <code>$</code> / <code>$$</code> 切换按钮可选择行内公式（<code>$...$</code>）或行间公式（<code>$$...$$</code>）格式。</li>
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h4>常用公式</h4>
+      <ul>
+        <li>点击顶部「常用公式」按钮，从下拉菜单中选择预设公式快速插入。</li>
+        <li>点击「添加自定义公式」可保存你常用的公式，下次直接从菜单中选用。</li>
+        <li>悬停在自定义公式上可看到删除按钮，点击即可移除。</li>
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h4>虚拟键盘</h4>
+      <ul>
+        <li>底部键盘分为多个分类标签：希腊字母、微积分、三角函数、代数、逻辑、集合、矩阵、物理。</li>
+        <li>点击标题栏可折叠/展开键盘。</li>
+        <li>每个按键显示符号预览，点击即插入对应代码。</li>
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h4>主题切换</h4>
+      <ul>
+        <li>点击顶部「主题」按钮在浅色（纸感学术）和深色（暗夜终端）之间切换。</li>
+        <li>你的偏好会自动保存，刷新页面后保持不变。</li>
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h4>键盘快捷键</h4>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">以下为默认快捷键，可点击顶部「快捷键」按钮自定义修改。</p>
+      <ul class="shortcut-list">
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> 复制公式</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Backspace</kbd> 清空输入框</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> 切换行内 / 行间公式</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> 收藏当前公式</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> 折叠 / 展开虚拟键盘</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> 切换浅色 / 深色主题</li>
+        <li><kbd>Esc</kbd> 关闭弹窗 / 下拉菜单</li>
+        <li><kbd>Tab</kbd> 在输入框中插入两个空格</li>
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h4>语法提示</h4>
+      <ul>
+        <li>行内公式：<code>$E = mc^2$</code></li>
+        <li>行间公式：<code>$$\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}$$</code></li>
+        <li>矩阵：<code>\begin{pmatrix} a & b \\ c & d \end{pmatrix}</code></li>
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h4>反馈与建议</h4>
+      <ul>
+        <li>遇到问题或有功能建议，欢迎在 GitHub Issues 上发起提问。</li>
+        <li>也可以直接发送邮件至 <a href="mailto:zartc_hf9cjfxptr@aka.yeah.net" style="color:var(--accent);text-decoration:none;">zartc_hf9cjfxptr@aka.yeah.net</a>。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 快捷键设置弹窗 -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="position:relative;max-width:520px;">
+    <button class="modal-close" id="settings-close" aria-label="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <h2 class="modal-title">快捷键设置</h2>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">点击快捷键输入框，然后按下你想要的组合键。支持 Ctrl / Shift / Alt 修饰键 + 字母/数字/符号键。</p>
+    <div id="shortcut-list-container"></div>
+    <div class="add-formula-actions" style="margin-top:16px;">
+      <button class="btn-secondary" id="shortcut-reset">恢复默认</button>
+      <button class="btn-primary" id="shortcut-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添加公式弹窗 -->
+<div class="modal-overlay" id="add-formula-modal">
+  <div class="modal" style="position:relative;max-width:420px;">
+    <button class="modal-close" id="add-formula-close" aria-label="关闭">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <h2 class="modal-title">添加自定义公式</h2>
+    <div class="modal-section formula-preview-section" id="formula-preview-section" style="display:none;">
+      <h4>公式预览</h4>
+      <div class="formula-preview-box" id="formula-preview-box"></div>
+    </div>
+    <div class="modal-section">
+      <h4>公式名称</h4>
+      <input type="text" class="add-formula-input" id="formula-name-input" placeholder="如：欧拉公式" />
+    </div>
+    <div class="modal-section">
+      <h4>LaTeX 代码</h4>
+      <input type="text" class="add-formula-input" id="formula-latex-input" placeholder="如：e^{i\pi} + 1 = 0" style="font-family:var(--font-mono);" />
+    </div>
+    <div class="add-formula-actions">
+      <button class="btn-secondary" id="add-formula-cancel">取消</button>
+      <button class="btn-primary" id="add-formula-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ========== 虚拟键盘数据 ==========
+const keyboardData = {
+  '希腊字母': [
+    { label: 'α', latex: '\\alpha' },
+    { label: 'β', latex: '\\beta' },
+    { label: 'γ', latex: '\\gamma' },
+    { label: 'δ', latex: '\\delta' },
+    { label: 'ε', latex: '\\epsilon' },
+    { label: 'ζ', latex: '\\zeta' },
+    { label: 'η', latex: '\\eta' },
+    { label: 'θ', latex: '\\theta' },
+    { label: 'ι', latex: '\\iota' },
+    { label: 'κ', latex: '\\kappa' },
+    { label: 'λ', latex: '\\lambda' },
+    { label: 'μ', latex: '\\mu' },
+    { label: 'ν', latex: '\\nu' },
+    { label: 'ξ', latex: '\\xi' },
+    { label: 'ο', latex: '\\omicron' },
+    { label: 'π', latex: '\\pi' },
+    { label: 'ρ', latex: '\\rho' },
+    { label: 'σ', latex: '\\sigma' },
+    { label: 'τ', latex: '\\tau' },
+    { label: 'υ', latex: '\\upsilon' },
+    { label: 'φ', latex: '\\phi' },
+    { label: 'χ', latex: '\\chi' },
+    { label: 'ψ', latex: '\\psi' },
+    { label: 'ω', latex: '\\omega' },
+    { label: 'Γ', latex: '\\Gamma' },
+    { label: 'Δ', latex: '\\Delta' },
+    { label: 'Θ', latex: '\\Theta' },
+    { label: 'Λ', latex: '\\Lambda' },
+    { label: 'Ξ', latex: '\\Xi' },
+    { label: 'Π', latex: '\\Pi' },
+    { label: 'Σ', latex: '\\Sigma' },
+    { label: 'Φ', latex: '\\Phi' },
+    { label: 'Ψ', latex: '\\Psi' },
+    { label: 'Ω', latex: '\\Omega' },
+    { label: 'ϵ', latex: '\\varepsilon' },
+    { label: 'ϑ', latex: '\\vartheta' },
+    { label: 'ϕ', latex: '\\varphi' },
+    { label: 'ϖ', latex: '\\varpi' },
+    { label: 'ϱ', latex: '\\varrho' },
+    { label: 'ς', latex: '\\varsigma' },
+  ],
+  '微积分': [
+    { label: '∫', latex: '\\int' },
+    { label: '∬', latex: '\\iint' },
+    { label: '∭', latex: '\\iiint' },
+    { label: '∮', latex: '\\oint' },
+    { label: '∯', latex: '\\oiint' },
+    { label: '∰', latex: '\\oiiint' },
+    { label: '∑', latex: '\\sum' },
+    { label: '∏', latex: '\\prod' },
+    { label: '∐', latex: '\\coprod' },
+    { label: 'lim', latex: '\\lim' },
+    { label: 'd/dx', latex: '\\frac{d}{dx}' },
+    { label: '∂/∂x', latex: '\\frac{\\partial}{\\partial x}' },
+    { label: '∇', latex: '\\nabla' },
+    { label: '∂', latex: '\\partial' },
+    { label: '∞', latex: '\\infty' },
+    { label: '→', latex: '\\to' },
+    { label: '↑', latex: '\\uparrow' },
+    { label: '↓', latex: '\\downarrow' },
+    { label: '⇒', latex: '\\Rightarrow' },
+    { label: '⇔', latex: '\\Leftrightarrow' },
+    { label: 'dx', latex: '\\,dx' },
+    { label: 'dt', latex: '\\,dt' },
+    { label: 'o(x)', latex: '\\mathcal{O}(x)' },
+    { label: 'exp', latex: '\\exp' },
+    { label: 'ln', latex: '\\ln' },
+    { label: 'log', latex: '\\log' },
+  ],
+  '三角函数': [
+    { label: 'sin', latex: '\\sin' },
+    { label: 'cos', latex: '\\cos' },
+    { label: 'tan', latex: '\\tan' },
+    { label: 'cot', latex: '\\cot' },
+    { label: 'sec', latex: '\\sec' },
+    { label: 'csc', latex: '\\csc' },
+    { label: 'sin²', latex: '\\sin^{2}' },
+    { label: 'cos²', latex: '\\cos^{2}' },
+    { label: 'tan²', latex: '\\tan^{2}' },
+    { label: 'arcsin', latex: '\\arcsin' },
+    { label: 'arccos', latex: '\\arccos' },
+    { label: 'arctan', latex: '\\arctan' },
+    { label: 'arccot', latex: '\\operatorname{arccot}' },
+    { label: 'arcsec', latex: '\\operatorname{arcsec}' },
+    { label: 'arccsc', latex: '\\operatorname{arccsc}' },
+    { label: 'sinh', latex: '\\sinh' },
+    { label: 'cosh', latex: '\\cosh' },
+    { label: 'tanh', latex: '\\tanh' },
+    { label: 'coth', latex: '\\coth' },
+    { label: 'sech', latex: '\\operatorname{sech}' },
+    { label: 'csch', latex: '\\operatorname{csch}' },
+    { label: 'arsinh', latex: '\\operatorname{arsinh}' },
+    { label: 'arcosh', latex: '\\operatorname{arcosh}' },
+    { label: 'artanh', latex: '\\operatorname{artanh}' },
+    { label: '°', latex: '^{\\circ}' },
+    { label: '′', latex: "'" },
+    { label: '″', latex: "''" },
+    { label: 'rad', latex: '\\operatorname{rad}' },
+    { label: 'π', latex: '\\pi' },
+    { label: '2π', latex: '2\\pi' },
+    { label: 'π/2', latex: '\\frac{\\pi}{2}' },
+    { label: 'π/4', latex: '\\frac{\\pi}{4}' },
+    { label: 'π/6', latex: '\\frac{\\pi}{6}' },
+    { label: 'π/3', latex: '\\frac{\\pi}{3}' },
+    { label: 'e^{iθ}', latex: 'e^{i\\theta}' },
+    { label: 'sinθ', latex: '\\sin\\theta' },
+    { label: 'cosθ', latex: '\\cos\\theta' },
+    { label: 'sin²θ', latex: '\\sin^2\\theta' },
+    { label: 'cos²θ', latex: '\\cos^2\\theta' },
+    { label: 'tan(θ/2)', latex: '\\tan\\frac{\\theta}{2}' },
+    { label: 'sin(A±B)', latex: '\\sin(A \\pm B)' },
+    { label: 'cos(A±B)', latex: '\\cos(A \\pm B)' },
+    { label: 'sinAcosB', latex: '\\sin A \\cos B' },
+    { label: 'sin²+cos²', latex: '\\sin^2\\theta + \\cos^2\\theta = 1' },
+    { label: '1+tan²', latex: '1 + \\tan^2\\theta = \\sec^2\\theta' },
+    { label: '1+cot²', latex: '1 + \\cot^2\\theta = \\csc^2\\theta' },
+    { label: 'sin2θ', latex: '\\sin 2\\theta = 2\\sin\\theta\\cos\\theta' },
+    { label: 'cos2θ', latex: '\\cos 2\\theta = \\cos^2\\theta - \\sin^2\\theta' },
+    { label: 'tan2θ', latex: '\\tan 2\\theta = \\frac{2\\tan\\theta}{1-\\tan^2\\theta}' },
+    { label: 'sin(A)+sin(B)', latex: '\\sin A + \\sin B = 2\\sin\\frac{A+B}{2}\\cos\\frac{A-B}{2}' },
+    { label: 'cos(A)+cos(B)', latex: '\\cos A + \\cos B = 2\\cos\\frac{A+B}{2}\\cos\\frac{A-B}{2}' },
+    { label: 'sinA-sinB', latex: '\\sin A - \\sin B = 2\\cos\\frac{A+B}{2}\\sin\\frac{A-B}{2}' },
+    { label: 'cosA-cosB', latex: '\\cos A - \\cos B = -2\\sin\\frac{A+B}{2}\\sin\\frac{A-B}{2}' },
+    { label: 'sinAsinB', latex: '\\sin A \\sin B = \\frac{1}{2}[\\cos(A-B) - \\cos(A+B)]' },
+    { label: 'cosAcosB', latex: '\\cos A \\cos B = \\frac{1}{2}[\\cos(A-B) + \\cos(A+B)]' },
+    { label: 'sinAcosB→', latex: '\\sin A \\cos B = \\frac{1}{2}[\\sin(A+B) + \\sin(A-B)]' },
+    { label: '半角公式', latex: '\\sin\\frac{\\theta}{2} = \\pm\\sqrt{\\frac{1-\\cos\\theta}{2}}' },
+    { label: 'cos半角', latex: '\\cos\\frac{\\theta}{2} = \\pm\\sqrt{\\frac{1+\\cos\\theta}{2}}' },
+    { label: 'tan半角', latex: '\\tan\\frac{\\theta}{2} = \\frac{1-\\cos\\theta}{\\sin\\theta}' },
+    { label: '积化和差', latex: '\\sin A \\sin B = \\frac{1}{2}[\\cos(A-B) - \\cos(A+B)]' },
+    { label: '和差化积', latex: '\\sin A + \\sin B = 2\\sin\\frac{A+B}{2}\\cos\\frac{A-B}{2}' },
+    { label: '万能公式', latex: '\\sin\\theta = \\frac{2\\tan\\frac{\\theta}{2}}{1+\\tan^2\\frac{\\theta}{2}}' },
+    { label: '欧拉公式', latex: 'e^{i\\theta} = \\cos\\theta + i\\sin\\theta' },
+    { label: '棣莫弗', latex: '(\\cos\\theta + i\\sin\\theta)^n = \\cos n\\theta + i\\sin n\\theta' },
+    { label: '正弦定理', latex: '\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R' },
+    { label: '余弦定理', latex: 'c^2 = a^2 + b^2 - 2ab\\cos C' },
+    { label: '正切定理', latex: '\\frac{a-b}{a+b} = \\frac{\\tan\\frac{A-B}{2}}{\\tan\\frac{A+B}{2}}' },
+    { label: '余切θ', latex: '\\cot\\theta' },
+    { label: 'secθ', latex: '\\sec\\theta' },
+    { label: 'cscθ', latex: '\\csc\\theta' },
+  ],
+  '代数': [
+    { label: '√', latex: '\\sqrt{}' },
+    { label: '√[n]', latex: '\\sqrt[n]{}' },
+    { label: 'x²', latex: '^2' },
+    { label: 'xⁿ', latex: '^{}' },
+    { label: 'x₂', latex: '_2' },
+    { label: 'xₙ', latex: '_{}' },
+    { label: 'a/b', latex: '\\frac{}{}' },
+    { label: '(ⁿ)', latex: '()^{ }' },
+    { label: '[ⁿ]', latex: '[]^{ }' },
+    { label: '{ⁿ}', latex: '\\{\\}^{ }' },
+    { label: '|x|', latex: '\\vert \\vert' },
+    { label: '‖x‖', latex: '\\Vert \\Vert' },
+    { label: '⌊x⌋', latex: '\\lfloor \\rfloor' },
+    { label: '⌈x⌉', latex: '\\lceil \\rceil' },
+    { label: 'x̂', latex: '\\hat{}' },
+    { label: 'x̄', latex: '\\bar{}' },
+    { label: 'x̃', latex: '\\tilde{}' },
+    { label: 'x⃗', latex: '\\vec{}' },
+    { label: 'x̊', latex: '\\mathring{}' },
+    { label: 'ẋ', latex: '\\dot{}' },
+    { label: 'ẍ', latex: '\\ddot{}' },
+    { label: '±', latex: '\\pm' },
+    { label: '∓', latex: '\\mp' },
+    { label: '×', latex: '\\times' },
+    { label: '÷', latex: '\\div' },
+    { label: '·', latex: '\\cdot' },
+    { label: '∗', latex: '\\ast' },
+    { label: '∘', latex: '\\circ' },
+    { label: '⊕', latex: '\\oplus' },
+    { label: '⊗', latex: '\\otimes' },
+    { label: '⊙', latex: '\\odot' },
+    { label: '⊖', latex: '\\ominus' },
+    { label: '⊘', latex: '\\oslash' },
+    { label: '⊥', latex: '\\perp' },
+    { label: '∥', latex: '\\parallel' },
+    { label: '∠', latex: '\\angle' },
+    { label: '∡', latex: '\\measuredangle' },
+    { label: '≅', latex: '\\cong' },
+    { label: '∼', latex: '\\sim' },
+    { label: '≃', latex: '\\simeq' },
+    { label: '≈', latex: '\\approx' },
+    { label: '≡', latex: '\\equiv' },
+    { label: '∝', latex: '\\propto' },
+    { label: 'n!', latex: 'n!' },
+    { label: 'C(n,k)', latex: '\\binom{n}{k}' },
+    { label: 'P(n,k)', latex: '\\frac{n!}{(n-k)!}' },
+    { label: 'n!!', latex: 'n!!' },
+    { label: 'mod', latex: '\\bmod' },
+    { label: 'gcd', latex: '\\gcd' },
+    { label: 'lcm', latex: '\\operatorname{lcm}' },
+    { label: 'max', latex: '\\max' },
+    { label: 'min', latex: '\\min' },
+    { label: 'sup', latex: '\\sup' },
+    { label: 'inf', latex: '\\inf' },
+    { label: 'arg max', latex: '\\arg\\max' },
+    { label: 'arg min', latex: '\\arg\\min' },
+    { label: 'deg', latex: '\\deg' },
+    { label: 'Re', latex: '\\operatorname{Re}' },
+    { label: 'Im', latex: '\\operatorname{Im}' },
+    { label: 'A→B', latex: 'f: A \\to B' },
+    { label: 'f⁻¹', latex: 'f^{-1}' },
+    { label: 'g∘f', latex: 'g \\circ f' },
+    { label: 'aₙ', latex: 'a_n' },
+    { label: 'aₙ₊₁', latex: 'a_{n+1}' },
+    { label: 'n→∞', latex: 'n \\to \\infty' },
+    { label: '∂f/∂x', latex: '\\frac{\\partial f}{\\partial x}' },
+    { label: '∂²f/∂x²', latex: '\\frac{\\partial^2 f}{\\partial x^2}' },
+    { label: '∇²', latex: '\\nabla^2' },
+    { label: '∇·', latex: '\\nabla \\cdot' },
+    { label: '∇×', latex: '\\nabla \\times' },
+    { label: 'δ', latex: '\\delta' },
+    { label: 'Δ', latex: '\\Delta' },
+  ],
+  '逻辑': [
+    { label: '∀', latex: '\\forall' },
+    { label: '∃', latex: '\\exists' },
+    { label: '∄', latex: '\\nexists' },
+    { label: '¬', latex: '\\neg' },
+    { label: '∧', latex: '\\wedge' },
+    { label: '∨', latex: '\\vee' },
+    { label: '⇒', latex: '\\Rightarrow' },
+    { label: '⇐', latex: '\\Leftarrow' },
+    { label: '⇔', latex: '\\Leftrightarrow' },
+    { label: '⟹', latex: '\\implies' },
+    { label: '⟸', latex: '\\impliedby' },
+    { label: '⟺', latex: '\\iff' },
+    { label: '⊢', latex: '\\vdash' },
+    { label: '⊨', latex: '\\vDash' },
+    { label: '⊤', latex: '\\top' },
+    { label: '⊥', latex: '\\bot' },
+    { label: '∴', latex: '\\therefore' },
+    { label: '∵', latex: '\\because' },
+    { label: '→', latex: '\\to' },
+    { label: '↔', latex: '\\leftrightarrow' },
+    { label: '↦', latex: '\\mapsto' },
+    { label: '∘', latex: '\\circ' },
+    { label: 'T', latex: '\\mathsf{T}' },
+    { label: 'F', latex: '\\mathsf{F}' },
+    { label: 'ℕ', latex: '\\mathbb{N}' },
+    { label: 'ℤ', latex: '\\mathbb{Z}' },
+    { label: 'ℚ', latex: '\\mathbb{Q}' },
+    { label: 'ℝ', latex: '\\mathbb{R}' },
+    { label: 'ℂ', latex: '\\mathbb{C}' },
+    { label: 'ℍ', latex: '\\mathbb{H}' },
+    { label: '𝔽', latex: '\\mathbb{F}' },
+    { label: 'ℙ', latex: '\\mathbb{P}' },
+    { label: '𝔼', latex: '\\mathbb{E}' },
+    { label: '⊕', latex: '\\oplus' },
+    { label: '⊻', latex: '\\veebar' },
+    { label: '⊼', latex: '\\barwedge' },
+    { label: '⊽', latex: '\\barvee' },
+    { label: '⌜', latex: '\\ulcorner' },
+    { label: '⌝', latex: '\\urcorner' },
+    { label: '⊢', latex: '\\vdash' },
+    { label: '⊣', latex: '\\dashv' },
+    { label: '⊨', latex: '\\models' },
+    { label: '□', latex: '\\Box' },
+    { label: '◇', latex: '\\Diamond' },
+    { label: '⌊⌋', latex: '\\lfloor \\rfloor' },
+    { label: '⌈⌉', latex: '\\lceil \\rceil' },
+    { label: '⌊x⌋', latex: '\\lfloor x \\rfloor' },
+    { label: '⌈x⌉', latex: '\\lceil x \\rceil' },
+  ],
+  '集合': [
+    { label: '∈', latex: '\\in' },
+    { label: '∉', latex: '\\notin' },
+    { label: '∋', latex: '\\ni' },
+    { label: '∌', latex: '\\notni' },
+    { label: '⊂', latex: '\\subset' },
+    { label: '⊃', latex: '\\supset' },
+    { label: '⊆', latex: '\\subseteq' },
+    { label: '⊇', latex: '\\supseteq' },
+    { label: '⊊', latex: '\\subsetneq' },
+    { label: '⊋', latex: '\\supsetneq' },
+    { label: '∪', latex: '\\cup' },
+    { label: '∩', latex: '\\cap' },
+    { label: '⊎', latex: '\\uplus' },
+    { label: '⊓', latex: '\\sqcap' },
+    { label: '⊔', latex: '\\sqcup' },
+    { label: '∖', latex: '\\setminus' },
+    { label: '∅', latex: '\\emptyset' },
+    { label: '∅', latex: '\\varnothing' },
+    { label: '𝒫', latex: '\\mathcal{P}' },
+    { label: '{ }', latex: '\\{\\}' },
+    { label: '⟨⟩', latex: '\\langle \\rangle' },
+    { label: 'ℵ', latex: '\\aleph' },
+    { label: 'ℶ', latex: '\\beth' },
+    { label: 'ℵ₀', latex: '\\aleph_0' },
+    { label: 'card', latex: '\\operatorname{card}' },
+    { label: '⊖', latex: '\\setminus' },
+    { label: '△', latex: '\\triangle' },
+    { label: '⋃', latex: '\\bigcup' },
+    { label: '⋂', latex: '\\bigcap' },
+    { label: '⨄', latex: '\\biguplus' },
+    { label: '⨆', latex: '\\bigsqcup' },
+    { label: '∏', latex: '\\prod' },
+    { label: '∐', latex: '\\coprod' },
+    { label: 'A×B', latex: 'A \\times B' },
+    { label: 'Aᶜ', latex: 'A^{c}' },
+    { label: 'Aᶠ', latex: '\\overline{A}' },
+    { label: 'A°', latex: 'A^{\\circ}' },
+    { label: '∂A', latex: '\\partial A' },
+    { label: '|A|', latex: '|A|' },
+    { label: '#A', latex: '\\#A' },
+    { label: 'f:A↠B', latex: 'f: A \\twoheadrightarrow B' },
+    { label: 'f:A↣B', latex: 'f: A \\hookrightarrow B' },
+  ],
+  '矩阵': [
+    { label: '( )', latex: '\\begin{pmatrix} \\\\ \\end{pmatrix}' },
+    { label: '[ ]', latex: '\\begin{bmatrix} \\\\ \\end{bmatrix}' },
+    { label: '{ }', latex: '\\begin{Bmatrix} \\\\ \\end{Bmatrix}' },
+    { label: '| |', latex: '\\begin{vmatrix} \\\\ \\end{vmatrix}' },
+    { label: '‖ ‖', latex: '\\begin{Vmatrix} \\\\ \\end{Vmatrix}' },
+    { label: '2×2', latex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}' },
+    { label: '3×3', latex: '\\begin{pmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{pmatrix}' },
+    { label: 'cases', latex: '\\begin{cases} \\\\ \\end{cases}' },
+    { label: 'align', latex: '\\begin{aligned} \\\\ \\end{aligned}' },
+    { label: '\\\\', latex: '\\\\' },
+    { label: '&', latex: ' & ' },
+    { label: 'det', latex: '\\det' },
+    { label: 'rank', latex: '\\operatorname{rank}' },
+    { label: 'tr', latex: '\\operatorname{tr}' },
+    { label: 'dim', latex: '\\dim' },
+    { label: 'ker', latex: '\\ker' },
+    { label: 'Im', latex: '\\operatorname{Im}' },
+    { label: 'Aᵀ', latex: '^{\\mathsf{T}}' },
+    { label: 'A⁻¹', latex: '^{-1}' },
+    { label: 'A†', latex: '^{\\dagger}' },
+    { label: '2×2(b)', latex: '\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}' },
+    { label: '3×3(b)', latex: '\\begin{bmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{bmatrix}' },
+    { label: '2×2(v)', latex: '\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}' },
+    { label: '3×3(v)', latex: '\\begin{vmatrix} a & b & c \\\\ d & e & f \\\\ g & h & i \\end{vmatrix}' },
+    { label: '对角', latex: '\\begin{pmatrix} \\lambda_1 & & \\\\ & \\lambda_2 & \\\\ & & \\lambda_3 \\end{pmatrix}' },
+    { label: '单位', latex: '\\mathbb{I}' },
+    { label: 'O', latex: '\\mathbf{O}' },
+    { label: 'A·B', latex: '\\mathbf{A} \\cdot \\mathbf{B}' },
+    { label: 'A×B', latex: '\\mathbf{A} \\times \\mathbf{B}' },
+    { label: 'A⊗B', latex: 'A \\otimes B' },
+    { label: 'col', latex: '\\operatorname{col}' },
+    { label: 'row', latex: '\\operatorname{row}' },
+    { label: 'span', latex: '\\operatorname{span}' },
+    { label: 'null', latex: '\\operatorname{null}' },
+    { label: 'range', latex: '\\operatorname{range}' },
+    { label: 'eig', latex: '\\operatorname{eig}' },
+    { label: 'diag', latex: '\\operatorname{diag}' },
+    { label: 'adj', latex: '\\operatorname{adj}' },
+    { label: 'gl(n)', latex: '\\mathfrak{gl}(n)' },
+    { label: 'sl(n)', latex: '\\mathfrak{sl}(n)' },
+    { label: 'so(n)', latex: '\\mathfrak{so}(n)' },
+    { label: 'su(n)', latex: '\\mathfrak{su}(n)' },
+  ],
+  '物理': [
+    { label: 'ℏ', latex: '\\hbar' },
+    { label: 'c', latex: 'c' },
+    { label: 'G', latex: 'G' },
+    { label: 'e', latex: 'e' },
+    { label: 'k_B', latex: 'k_B' },
+    { label: 'N_A', latex: 'N_A' },
+    { label: 'R', latex: 'R' },
+    { label: 'σ', latex: '\\sigma' },
+    { label: 'ε₀', latex: '\\varepsilon_0' },
+    { label: 'μ₀', latex: '\\mu_0' },
+    { label: 'Z₀', latex: 'Z_0' },
+    { label: 'α', latex: '\\alpha_{\\text{fs}}' },
+    { label: 'm_e', latex: 'm_e' },
+    { label: 'm_p', latex: 'm_p' },
+    { label: 'm_n', latex: 'm_n' },
+    { label: 'a₀', latex: 'a_0' },
+    { label: 'λ_C', latex: '\\lambda_C' },
+    { label: 'r_e', latex: 'r_e' },
+    { label: 'μ_B', latex: '\\mu_B' },
+    { label: 'μ_N', latex: '\\mu_N' },
+    { label: 'Φ₀', latex: '\\Phi_0' },
+    { label: 'L', latex: 'L' },
+    { label: 'g', latex: 'g' },
+    { label: 'kg', latex: '\\mathrm{kg}' },
+    { label: 'm/s', latex: '\\mathrm{m/s}' },
+    { label: 'N', latex: '\\mathrm{N}' },
+    { label: 'J', latex: '\\mathrm{J}' },
+    { label: 'W', latex: '\\mathrm{W}' },
+    { label: 'Pa', latex: '\\mathrm{Pa}' },
+    { label: 'Hz', latex: '\\mathrm{Hz}' },
+    { label: 'V', latex: '\\mathrm{V}' },
+    { label: 'Ω', latex: '\\Omega' },
+    { label: 'F', latex: '\\mathrm{F}' },
+    { label: 'H', latex: '\\mathrm{H}' },
+    { label: 'T', latex: '\\mathrm{T}' },
+    { label: 'Wb', latex: '\\mathrm{Wb}' },
+    { label: 'C', latex: '\\mathrm{C}' },
+    { label: 'A', latex: '\\mathrm{A}' },
+    { label: 'K', latex: '\\mathrm{K}' },
+    { label: 'mol', latex: '\\mathrm{mol}' },
+    { label: 'eV', latex: '\\mathrm{eV}' },
+    { label: 'fm', latex: '\\mathrm{fm}' },
+    { label: 'Å', latex: '\\text{\\AA}' },
+    { label: '°', latex: '^{\\circ}' },
+    { label: 'd⁴x', latex: 'd^4x' },
+    { label: 'd³r', latex: 'd^3\\mathbf{r}' },
+    { label: '⊗', latex: '\\otimes' },
+    { label: '·', latex: '\\cdot' },
+    { label: '⟨⟩', latex: '\\langle \\rangle' },
+    { label: '⟨A⟩', latex: '\\langle A \\rangle' },
+    { label: '⟨AB⟩', latex: '\\langle AB \\rangle' },
+    { label: 'ρ', latex: '\\rho' },
+    { label: 'ψ', latex: '\\psi' },
+    { label: 'Ψ', latex: '\\Psi' },
+    { label: 'φ', latex: '\\phi' },
+    { label: 'Φ', latex: '\\Phi' },
+    { label: 'Ĥ', latex: '\\hat{H}' },
+    { label: 'p̂', latex: '\\hat{p}' },
+    { label: 'x̂', latex: '\\hat{x}' },
+    { label: 'Â', latex: '\\hat{A}' },
+    { label: 'Û', latex: '\\hat{U}' },
+    { label: 'Ŝ', latex: '\\hat{S}' },
+    { label: 'Tr', latex: '\\operatorname{Tr}' },
+    { label: 'det', latex: '\\det' },
+    { label: 'D-Alembert', latex: '\\Box = \\partial_\\mu \\partial^\\mu' },
+    { label: 'F_{μν}', latex: 'F_{\\mu\\nu}' },
+    { label: 'g_{μν}', latex: 'g_{\\mu\\nu}' },
+    { label: 'Γ^μ_{νλ}', latex: '\\Gamma^{\\mu}_{\\nu\\lambda}' },
+    { label: 'R_{μν}', latex: 'R_{\\mu\\nu}' },
+    { label: 'T_{μν}', latex: 'T_{\\mu\\nu}' },
+    { label: 'G_{μν}', latex: 'G_{\\mu\\nu}' },
+    { label: 'ε_{ijk}', latex: '\\varepsilon_{ijk}' },
+    { label: 'σ^μ', latex: '\\sigma^\\mu' },
+    { label: 'γ^μ', latex: '\\gamma^\\mu' },
+    { label: 'η_{μν}', latex: '\\eta_{\\mu\\nu}' },
+    { label: 'kBT', latex: 'k_B T' },
+    { label: 'β=1/kT', latex: '\\beta = \\frac{1}{k_B T}' },
+    { label: 'Z', latex: 'Z = \\operatorname{Tr} e^{-\\beta H}' },
+    { label: 'S=-kΣplnp', latex: 'S = -k_B \\sum p_i \\ln p_i' },
+    { label: 'dσ/dΩ', latex: '\\frac{d\\sigma}{d\\Omega}' },
+    { label: 'ℒ', latex: '\\mathcal{L}' },
+    { label: 'ℋ', latex: '\\mathcal{H}' },
+    { label: '𝒟', latex: '\\mathcal{D}' },
+    { label: 'ℳ', latex: '\\mathcal{M}' },
+    { label: 'δ(x)', latex: '\\delta(x)' },
+    { label: 'δ³(r)', latex: '\\delta^3(\\mathbf{r})' },
+    { label: 'θ(x)', latex: '\\theta(x)' },
+    { label: 'ε₀', latex: '\\varepsilon_0' },
+    { label: 'm/s²', latex: '\\mathrm{m/s^2}' },
+    { label: 'cd', latex: '\\mathrm{cd}' },
+    { label: 'lm', latex: '\\mathrm{lm}' },
+    { label: 'lux', latex: '\\mathrm{lx}' },
+    { label: 'Bq', latex: '\\mathrm{Bq}' },
+    { label: 'Gy', latex: '\\mathrm{Gy}' },
+    { label: 'Sv', latex: '\\mathrm{Sv}' },
+    { label: 'kat', latex: '\\mathrm{kat}' },
+  ],
+  '箭头与杂项': [
+    { label: '→', latex: '\\to' },
+    { label: '←', latex: '\\gets' },
+    { label: '↔', latex: '\\leftrightarrow' },
+    { label: '⇒', latex: '\\Rightarrow' },
+    { label: '⇐', latex: '\\Leftarrow' },
+    { label: '⇔', latex: '\\Leftrightarrow' },
+    { label: '↦', latex: '\\mapsto' },
+    { label: '↗', latex: '\\nearrow' },
+    { label: '↘', latex: '\\searrow' },
+    { label: '↑', latex: '\\uparrow' },
+    { label: '↓', latex: '\\downarrow' },
+    { label: '⇑', latex: '\\Uparrow' },
+    { label: '⇓', latex: '\\Downarrow' },
+    { label: '⟶', latex: '\\longrightarrow' },
+    { label: '⟵', latex: '\\longleftarrow' },
+    { label: '⟷', latex: '\\longleftrightarrow' },
+    { label: '⟹', latex: '\\implies' },
+    { label: '⟸', latex: '\\impliedby' },
+    { label: '⟺', latex: '\\iff' },
+    { label: '…', latex: '\\ldots' },
+    { label: '⋯', latex: '\\cdots' },
+    { label: '⋮', latex: '\\vdots' },
+    { label: '⋱', latex: '\\ddots' },
+    { label: '°', latex: '^{\\circ}' },
+    { label: '′', latex: '\\prime' },
+    { label: '″', latex: '\\doubleprime' },
+    { label: '★', latex: '\\star' },
+    { label: '†', latex: '\\dagger' },
+    { label: '‡', latex: '\\ddagger' },
+    { label: '§', latex: '\\S' },
+    { label: '¶', latex: '\\P' },
+    { label: 'ℏ', latex: '\\hbar' },
+    { label: 'ℓ', latex: '\\ell' },
+    { label: 'ℜ', latex: '\\Re' },
+    { label: 'ℑ', latex: '\\Im' },
+    { label: 'ℵ', latex: '\\aleph' },
+    { label: '∂', latex: '\\partial' },
+    { label: '∇', latex: '\\nabla' },
+    { label: '∞', latex: '\\infty' },
+    { label: '□', latex: '\\square' },
+    { label: '□', latex: '\\Box' },
+    { label: '△', latex: '\\triangle' },
+    { label: '◇', latex: '\\diamond' },
+    { label: '♣', latex: '\\clubsuit' },
+    { label: '♢', latex: '\\diamondsuit' },
+    { label: '♡', latex: '\\heartsuit' },
+    { label: '♠', latex: '\\spadesuit' },
+  ],
+};
+
+// ========== 预设公式 ==========
+const presetFormulas = [
+  { name: '二次公式', latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}' },
+  { name: '欧拉公式', latex: 'e^{i\\pi} + 1 = 0' },
+  { name: '质能方程', latex: 'E = mc^2' },
+  { name: '牛顿第二定律', latex: '\\mathbf{F} = m\\mathbf{a}' },
+  { name: '高斯积分', latex: '\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}' },
+  { name: '泰勒展开', latex: 'f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!}(x-a)^n' },
+  { name: '正态分布', latex: 'f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}' },
+  { name: '薛定谔方程', latex: 'i\\hbar \\frac{\\partial}{\\partial t}\\Psi = \\hat{H}\\Psi' },
+  { name: '麦克斯韦方程组', latex: '\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t}' },
+  { name: '勾股定理', latex: 'a^2 + b^2 = c^2' },
+  { name: '三角恒等式', latex: '\\sin^2\\theta + \\cos^2\\theta = 1' },
+  { name: '对数换底', latex: '\\log_a b = \\frac{\\ln b}{\\ln a}' },
+  { name: '二项式定理', latex: '(x+y)^n = \\sum_{k=0}^{n} \\binom{n}{k} x^{n-k} y^k' },
+  { name: '矩阵乘法', latex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix} = \\begin{pmatrix} ax+by \\\\ cx+dy \\end{pmatrix}' },
+  { name: '行列式', latex: '\\det(A) = \\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad - bc' },
+  { name: '极限定义', latex: '\\lim_{x \\to a} f(x) = L' },
+  { name: '导数定义', latex: "f'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}" },
+  { name: '积分基本定理', latex: '\\int_a^b f(x) \\, dx = F(b) - F(a)' },
+  { name: '分部积分', latex: '\\int u \\, dv = uv - \\int v \\, du' },
+  { name: '斯托克斯定理', latex: '\\oint_{\\partial S} \\mathbf{F} \\cdot d\\mathbf{r} = \\iint_S (\\nabla \\times \\mathbf{F}) \\cdot d\\mathbf{S}' },
+  { name: '余弦定理', latex: 'c^2 = a^2 + b^2 - 2ab\\cos C' },
+  { name: '正弦定理', latex: '\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R' },
+  { name: '倍角公式', latex: '\\sin 2\\theta = 2\\sin\\theta\\cos\\theta' },
+  { name: '半角公式', latex: '\\sin\\frac{\\theta}{2} = \\pm\\sqrt{\\frac{1-\\cos\\theta}{2}}' },
+  { name: '和差化积', latex: '\\sin A + \\sin B = 2\\sin\\frac{A+B}{2}\\cos\\frac{A-B}{2}' },
+  { name: '积化和差', latex: '\\sin A \\sin B = \\frac{1}{2}[\\cos(A-B) - \\cos(A+B)]' },
+  { name: '万能公式', latex: '\\sin\\theta = \\frac{2\\tan\\frac{\\theta}{2}}{1+\\tan^2\\frac{\\theta}{2}}' },
+  { name: '柯西不等式', latex: '\\left(\\sum a_i b_i\\right)^2 \\leq \\left(\\sum a_i^2\\right)\\left(\\sum b_i^2\\right)' },
+  { name: '斯特林公式', latex: 'n! \\sim \\sqrt{2\\pi n}\\left(\\frac{n}{e}\\right)^n' },
+  { name: '泊松分布', latex: 'P(k) = \\frac{\\lambda^k e^{-\\lambda}}{k!}' },
+  { name: '玻尔兹曼熵', latex: 'S = k_B \\ln W' },
+  { name: '热力学第一定律', latex: 'dU = \\delta Q - \\delta W' },
+  { name: '洛伦兹变换', latex: "x' = \\gamma(x - vt)" },
+  { name: '德布罗意波长', latex: '\\lambda = \\frac{h}{p}' },
+  { name: '测不准原理', latex: '\\Delta x \\cdot \\Delta p \\geq \\frac{\\hbar}{2}' },
+];
+
+// ========== 状态 ==========
+let currentTab = '希腊字母';
+let customFormulas = [];
+let renderTimer = null;
+let formulaMode = 'inline'; // 'inline' ($...$) 或 'display' ($$...$$)
+
+// ========== DOM ==========
+const input = document.getElementById('latex-input');
+const previewContent = document.getElementById('preview-content');
+const previewEmpty = document.getElementById('preview-empty');
+const previewWrap = document.getElementById('preview-wrap');
+const keyboard = document.getElementById('keyboard');
+const kbTabs = document.getElementById('kb-tabs');
+const kbGrid = document.getElementById('kb-grid');
+const kbToggle = document.getElementById('kb-toggle');
+const kbHeader = document.getElementById('kb-header');
+const kbBody = document.getElementById('kb-body');
+const btnTheme = document.getElementById('btn-theme');
+const themeIcon = document.getElementById('theme-icon');
+const btnFormulas = document.getElementById('btn-formulas');
+const formulasDropdown = document.getElementById('formulas-dropdown');
+const btnHelp = document.getElementById('btn-help');
+const helpModal = document.getElementById('help-modal');
+const helpClose = document.getElementById('help-close');
+const btnSettings = document.getElementById('btn-settings');
+const settingsModal = document.getElementById('settings-modal');
+const settingsClose = document.getElementById('settings-close');
+const shortcutListContainer = document.getElementById('shortcut-list-container');
+const shortcutReset = document.getElementById('shortcut-reset');
+const shortcutSave = document.getElementById('shortcut-save');
+const btnCopy = document.getElementById('btn-copy');
+const btnClear = document.getElementById('btn-clear');
+const btnSaveFormula = document.getElementById('btn-save-formula');
+const modeToggle = document.getElementById('mode-toggle');
+const modeBtns = modeToggle.querySelectorAll('.mode-btn');
+const btnAddFormula = document.getElementById('btn-add-formula');
+const addFormulaModal = document.getElementById('add-formula-modal');
+const addFormulaClose = document.getElementById('add-formula-close');
+const addFormulaCancel = document.getElementById('add-formula-cancel');
+const addFormulaSave = document.getElementById('add-formula-save');
+const formulaNameInput = document.getElementById('formula-name-input');
+const formulaLatexInput = document.getElementById('formula-latex-input');
+const formulaPreviewSection = document.getElementById('formula-preview-section');
+const formulaPreviewBox = document.getElementById('formula-preview-box');
+const presetFormulasList = document.getElementById('preset-formulas-list');
+const customFormulasList = document.getElementById('custom-formulas-list');
+const toast = document.getElementById('toast');
+
+// ========== 主题 ==========
+function getTheme() {
+  return localStorage.getItem('math-editor-theme') || 'light';
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('math-editor-theme', theme);
+  if (theme === 'dark') {
+    themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
+  }
+}
+
+btnTheme.addEventListener('click', () => {
+  const next = getTheme() === 'light' ? 'dark' : 'light';
+  setTheme(next);
+});
+
+setTheme(getTheme());
+
+// ========== 虚拟键盘 ==========
+function buildTabs() {
+  kbTabs.innerHTML = '';
+  Object.keys(keyboardData).forEach((tabName) => {
+    const tab = document.createElement('button');
+    tab.className = 'kb-tab' + (tabName === currentTab ? ' active' : '');
+    tab.textContent = tabName;
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentTab = tabName;
+      buildTabs();
+      buildKeys();
+    });
+    kbTabs.appendChild(tab);
+  });
+}
+
+function buildKeys() {
+  kbGrid.innerHTML = '';
+  const keys = keyboardData[currentTab] || [];
+  keys.forEach((key) => {
+    const btn = document.createElement('button');
+    btn.className = 'kb-key';
+    btn.title = key.latex;
+    btn.innerHTML = `<span class="key-label">${key.label}</span>`;
+    btn.addEventListener('click', () => insertAtCursor(key.latex));
+    kbGrid.appendChild(btn);
+  });
+}
+
+// 折叠/展开
+kbHeader.addEventListener('click', (e) => {
+  // 只在点击 header 空白处或 toggle 按钮时折叠
+  if (e.target.closest('.kb-tab')) return;
+  keyboard.classList.toggle('collapsed');
+  const toggleText = kbToggle.querySelector('span');
+  if (keyboard.classList.contains('collapsed')) {
+    toggleText.textContent = '展开';
+  } else {
+    toggleText.textContent = '收起';
+  }
+});
+
+buildTabs();
+buildKeys();
+
+// ========== 光标插入 ==========
+function insertAtCursor(text) {
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const value = input.value;
+  
+  // 智能光标定位：如果插入的代码含有 {}，将光标放在第一个 {} 内
+  let insertText = text;
+  let cursorOffset = text.length;
+
+  const braceMatch = text.indexOf('{}');
+  if (braceMatch !== -1) {
+    cursorOffset = braceMatch + 1;
+  } else {
+    // 对于 \frac{}{} 的情况，定位到第一个 {}
+    const fracMatch = text.match(/\\frac\{\}/);
+    if (fracMatch) {
+      cursorOffset = text.indexOf('{}') + 1;
+    }
+  }
+  
+  input.value = value.slice(0, start) + insertText + value.slice(end);
+  input.focus();
+  input.setSelectionRange(start + cursorOffset, start + cursorOffset);
+  scheduleRender();
+}
+
+// ========== 实时预览 ==========
+function scheduleRender() {
+  if (renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(renderPreview, 200);
+}
+
+function renderPreview() {
+  const latex = input.value.trim();
+  
+  if (!latex) {
+    previewContent.style.display = 'none';
+    previewContent.innerHTML = '';
+    previewEmpty.style.display = 'flex';
+    return;
+  }
+  
+  previewEmpty.style.display = 'none';
+  previewContent.style.display = 'block';
+  
+  // 清除之前的错误提示
+  const existingError = previewWrap.querySelector('.preview-error');
+  if (existingError) existingError.remove();
+  
+  // 根据模式包裹
+  if (formulaMode === 'display') {
+    previewContent.innerHTML = '$$' + latex + '$$';
+  } else {
+    previewContent.innerHTML = '$' + latex + '$';
+  }
+  
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise([previewContent]).catch((err) => {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'preview-error';
+      errorDiv.textContent = '公式语法错误：' + (err.message || '请检查 LaTeX 代码');
+      previewWrap.insertBefore(errorDiv, previewContent);
+    });
+  }
+}
+
+input.addEventListener('input', scheduleRender);
+
+// 支持输入框中的 Tab 键缩进
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    insertAtCursor('  ');
+  }
+});
+
+// ========== 复制 ==========
+btnCopy.addEventListener('click', async () => {
+  const latex = input.value.trim();
+  if (!latex) {
+    showToast('输入框为空');
+    return;
+  }
+  const wrapper = formulaMode === 'display' ? '$$' : '$';
+  const text = wrapper + latex + wrapper;
+  try {
+    await navigator.clipboard.writeText(text);
+    const preview = latex.length > 30 ? latex.slice(0, 30) + '...' : latex;
+    showToast('已复制：' + wrapper + preview + wrapper);
+  } catch {
+    // 降级方案
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showToast('已复制到剪贴板');
+    } catch {
+      showToast('复制失败，请手动复制');
+    }
+    document.body.removeChild(textarea);
+  }
+});
+
+// ========== 清空 ==========
+btnClear.addEventListener('click', () => {
+  if (!input.value) return;
+  input.value = '';
+  scheduleRender();
+  input.focus();
+  showToast('已清空');
+});
+
+// ========== 模式切换 ==========
+modeBtns.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('active')) return;
+    modeBtns.forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    formulaMode = btn.dataset.mode;
+    renderPreview();
+  });
+});
+
+// ========== 常用公式下拉 ==========
+btnFormulas.addEventListener('click', (e) => {
+  e.stopPropagation();
+  formulasDropdown.classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+  if (!formulasDropdown.contains(e.target) && !btnFormulas.contains(e.target)) {
+    formulasDropdown.classList.remove('open');
+  }
+});
+
+function renderFormulasList() {
+  // 预设
+  presetFormulasList.innerHTML = '';
+  presetFormulas.forEach((f) => {
+    const item = document.createElement('div');
+    item.className = 'dropdown-item';
+    item.innerHTML = `<span class="dropdown-item-preview">𝑓</span><span style="flex:1">${f.name}</span><span class="dropdown-item-latex">${f.latex}</span>`;
+    item.addEventListener('click', () => {
+      insertAtCursor(f.latex);
+      formulasDropdown.classList.remove('open');
+    });
+    presetFormulasList.appendChild(item);
+  });
+  
+  // 自定义
+  customFormulasList.innerHTML = '';
+  if (customFormulas.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:10px 14px;font-size:12px;color:var(--text-muted);';
+    empty.textContent = '暂无自定义公式';
+    customFormulasList.appendChild(empty);
+  } else {
+    customFormulas.forEach((f, idx) => {
+      const item = document.createElement('div');
+      item.className = 'dropdown-item';
+      item.innerHTML = `<span class="dropdown-item-preview">𝑓</span><span style="flex:1">${f.name}</span><span class="dropdown-item-latex">${f.latex}</span><button class="dropdown-item-delete" aria-label="删除"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>`;
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.dropdown-item-delete')) {
+          e.stopPropagation();
+          customFormulas.splice(idx, 1);
+          saveCustomFormulas();
+          renderFormulasList();
+          showToast('已删除');
+          return;
+        }
+        insertAtCursor(f.latex);
+        formulasDropdown.classList.remove('open');
+      });
+      customFormulasList.appendChild(item);
+    });
+  }
+}
+
+function saveCustomFormulas() {
+  localStorage.setItem('math-editor-custom-formulas', JSON.stringify(customFormulas));
+}
+
+function loadCustomFormulas() {
+  try {
+    const stored = localStorage.getItem('math-editor-custom-formulas');
+    if (stored) customFormulas = JSON.parse(stored);
+  } catch {
+    customFormulas = [];
+  }
+}
+
+loadCustomFormulas();
+renderFormulasList();
+
+// ========== 添加公式弹窗 ==========
+
+// 公式预览渲染
+function renderFormulaPreview() {
+  const latex = formulaLatexInput.value.trim();
+  if (!latex) {
+    formulaPreviewBox.innerHTML = '';
+    return;
+  }
+  formulaPreviewBox.innerHTML = '\\[' + latex + '\\]';
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise([formulaPreviewBox]);
+  }
+}
+
+formulaLatexInput.addEventListener('input', renderFormulaPreview);
+
+// 从工具栏「常用公式 → 添加」打开
+btnAddFormula.addEventListener('click', (e) => {
+  e.stopPropagation();
+  formulasDropdown.classList.remove('open');
+  formulaNameInput.value = '';
+  formulaLatexInput.value = '';
+  formulaPreviewSection.style.display = 'none';
+  addFormulaModal.classList.add('open');
+  setTimeout(() => formulaNameInput.focus(), 100);
+});
+
+// 从输入框「收藏」按钮打开 — 自动填入当前公式
+btnSaveFormula.addEventListener('click', () => {
+  const currentLatex = input.value.trim();
+  if (!currentLatex) {
+    showToast('输入框为空，请先输入公式');
+    return;
+  }
+  formulaNameInput.value = '';
+  formulaLatexInput.value = currentLatex;
+  formulaPreviewSection.style.display = '';
+  renderFormulaPreview();
+  addFormulaModal.classList.add('open');
+  setTimeout(() => formulaNameInput.focus(), 100);
+});
+
+addFormulaClose.addEventListener('click', () => addFormulaModal.classList.remove('open'));
+addFormulaCancel.addEventListener('click', () => addFormulaModal.classList.remove('open'));
+
+addFormulaModal.addEventListener('click', (e) => {
+  if (e.target === addFormulaModal) addFormulaModal.classList.remove('open');
+});
+
+addFormulaSave.addEventListener('click', () => {
+  const name = formulaNameInput.value.trim();
+  const latex = formulaLatexInput.value.trim();
+  if (!name) { showToast('请输入公式名称'); return; }
+  if (!latex) { showToast('请输入 LaTeX 代码'); return; }
+  customFormulas.push({ name, latex });
+  saveCustomFormulas();
+  renderFormulasList();
+  addFormulaModal.classList.remove('open');
+  showToast('已添加：' + name);
+});
+
+formulaLatexInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addFormulaSave.click();
+});
+
+formulaNameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') formulaLatexInput.focus();
+});
+
+// ========== 帮助弹窗 ==========
+btnHelp.addEventListener('click', () => helpModal.classList.add('open'));
+helpClose.addEventListener('click', () => helpModal.classList.remove('open'));
+helpModal.addEventListener('click', (e) => {
+  if (e.target === helpModal) helpModal.classList.remove('open');
+});
+
+// ESC 关闭弹窗 + 快捷键
+const DEFAULT_SHORTCUTS = {
+  copy:       { label: '复制公式',       combo: { ctrl: true, shift: true, alt: false, key: 'c' } },
+  clear:      { label: '清空输入',       combo: { ctrl: true, shift: true, alt: false, key: 'backspace' } },
+  mode:       { label: '切换行内/行间',  combo: { ctrl: true, shift: true, alt: false, key: 'm' } },
+  save:       { label: '收藏公式',       combo: { ctrl: true, shift: true, alt: false, key: 's' } },
+  keyboard:   { label: '折叠/展开键盘',  combo: { ctrl: true, shift: true, alt: false, key: 'k' } },
+  theme:      { label: '切换主题',       combo: { ctrl: true, shift: true, alt: false, key: 't' } },
+};
+
+let shortcuts = loadShortcuts();
+let recordingRow = null;
+
+function loadShortcuts() {
+  try {
+    const stored = localStorage.getItem('math-editor-shortcuts');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // 合并默认值，防止新增字段缺失
+      const merged = {};
+      for (const id in DEFAULT_SHORTCUTS) {
+        merged[id] = {
+          label: DEFAULT_SHORTCUTS[id].label,
+          combo: parsed[id] ? parsed[id].combo : { ...DEFAULT_SHORTCUTS[id].combo }
+        };
+      }
+      return merged;
+    }
+  } catch {}
+  return JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+}
+
+function saveShortcuts() {
+  localStorage.setItem('math-editor-shortcuts', JSON.stringify(shortcuts));
+}
+
+function comboToString(combo) {
+  const parts = [];
+  if (combo.ctrl)  parts.push('Ctrl');
+  if (combo.shift) parts.push('Shift');
+  if (combo.alt)   parts.push('Alt');
+  parts.push(combo.key === ' ' ? 'Space' : combo.key.toUpperCase());
+  return parts.join(' + ');
+}
+
+function comboToKey(combo) {
+  return [combo.ctrl, combo.shift, combo.alt, combo.key.toLowerCase()].join('|');
+}
+
+function isSameCombo(a, b) {
+  return comboToKey(a) === comboToKey(b);
+}
+
+function isReservedKey(key) {
+  // 这些键即使配合修饰键也不应使用
+  return ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+          'Tab','CapsLock','NumLock','ScrollLock','PrintScreen','Pause',
+          'Insert','Home','End','PageUp','PageDown',
+          'ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key);
+}
+
+// 检查快捷键是否冲突（与其他动作或浏览器保留组合）
+function checkConflict(id, combo) {
+  // 1. 至少需要一个修饰键
+  if (!combo.ctrl && !combo.alt && !combo.shift) {
+    return '需要至少一个修饰键（Ctrl/Shift/Alt）';
+  }
+  // 2. 不能只有 Shift（Shift+字母会输入大写/符号）
+  if (!combo.ctrl && !combo.alt) {
+    return '不能仅用 Shift，请加上 Ctrl 或 Alt';
+  }
+  // 3. 禁止保留键
+  if (isReservedKey(combo.key)) {
+    return combo.key + ' 是保留键，不可使用';
+  }
+  // 4. 检查与其他动作冲突
+  for (const otherId in shortcuts) {
+    if (otherId === id) continue;
+    if (isSameCombo(shortcuts[otherId].combo, combo)) {
+      return '与「' + shortcuts[otherId].label + '」冲突';
+    }
+  }
+  // 5. 检查浏览器冲突（常见）
+  if (combo.ctrl && !combo.shift && !combo.alt) {
+    const browserConflicts = {
+      'a': 'Ctrl+A（全选）', 'c': 'Ctrl+C（复制）', 'v': 'Ctrl+V（粘贴）',
+      'x': 'Ctrl+X（剪切）', 's': 'Ctrl+S（保存）', 'p': 'Ctrl+P（打印）',
+      'f': 'Ctrl+F（查找）', 'o': 'Ctrl+O（打开）', 'n': 'Ctrl+N（新建）',
+      'w': 'Ctrl+W（关闭）', 'r': 'Ctrl+R（刷新）', 't': 'Ctrl+T（新标签页）',
+      'l': 'Ctrl+L（地址栏）', 'd': 'Ctrl+D（书签）', 'h': 'Ctrl+H（历史）',
+      'j': 'Ctrl+J（下载）', 'u': 'Ctrl+U（查看源码）',
+    };
+    if (browserConflicts[combo.key.toLowerCase()]) {
+      return '与浏览器 ' + browserConflicts[combo.key.toLowerCase()] + ' 冲突';
+    }
+  }
+  return null;
+}
+
+// 执行快捷键动作
+function executeShortcut(id) {
+  switch (id) {
+    case 'copy':     btnCopy.click(); break;
+    case 'clear':    btnClear.click(); break;
+    case 'mode':
+      const nextMode = formulaMode === 'inline' ? 'display' : 'inline';
+      modeBtns.forEach((b) => b.classList.toggle('active', b.dataset.mode === nextMode));
+      formulaMode = nextMode;
+      renderPreview();
+      showToast(nextMode === 'display' ? '已切换到行间公式 $$...$$' : '已切换到行内公式 $...$');
+      break;
+    case 'save':     btnSaveFormula.click(); break;
+    case 'keyboard': kbHeader.click(); break;
+    case 'theme':    btnTheme.click(); break;
+  }
+}
+
+// 全局键盘监听
+document.addEventListener('keydown', (e) => {
+  // ESC 关闭弹窗（始终生效）
+  if (e.key === 'Escape') {
+    helpModal.classList.remove('open');
+    addFormulaModal.classList.remove('open');
+    settingsModal.classList.remove('open');
+    formulasDropdown.classList.remove('open');
+    // 取消录制
+    if (recordingRow) cancelRecording();
+    return;
+  }
+
+  // 如果正在录制快捷键
+  if (recordingRow) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleRecording(e);
+    return;
+  }
+
+  // 如果弹窗打开，不执行快捷键
+  if (helpModal.classList.contains('open') || 
+      addFormulaModal.classList.contains('open') || 
+      settingsModal.classList.contains('open')) return;
+
+  // 输入框聚焦时不触发（除非有修饰键组合）
+  const activeTag = document.activeElement.tagName;
+  if ((activeTag === 'INPUT' || activeTag === 'TEXTAREA') && 
+      !e.ctrlKey && !e.altKey && !e.metaKey) return;
+
+  // 匹配快捷键
+  const combo = {
+    ctrl: e.ctrlKey || e.metaKey,
+    shift: e.shiftKey,
+    alt: e.altKey,
+    key: e.key.toLowerCase()
+  };
+
+  for (const id in shortcuts) {
+    if (isSameCombo(shortcuts[id].combo, combo)) {
+      e.preventDefault();
+      executeShortcut(id);
+      return;
+    }
+  }
+});
+
+// ========== 快捷键设置弹窗 ==========
+function buildShortcutList() {
+  shortcutListContainer.innerHTML = '';
+  for (const id in shortcuts) {
+    const sc = shortcuts[id];
+    const row = document.createElement('div');
+    row.className = 'shortcut-row';
+    row.dataset.id = id;
+
+    const label = document.createElement('span');
+    label.className = 'shortcut-label';
+    label.textContent = sc.label;
+
+    const inputWrap = document.createElement('div');
+    inputWrap.className = 'shortcut-input';
+
+    const keyBox = document.createElement('div');
+    keyBox.className = 'shortcut-key-box';
+    keyBox.tabIndex = 0;
+    keyBox.innerHTML = '<span>' + comboToString(sc.combo) + '</span>';
+
+    const conflictMsg = document.createElement('div');
+    conflictMsg.className = 'shortcut-conflict-msg';
+
+    keyBox.addEventListener('click', () => startRecording(row, keyBox, conflictMsg, id));
+
+    inputWrap.appendChild(keyBox);
+    inputWrap.appendChild(conflictMsg);
+    row.appendChild(label);
+    row.appendChild(inputWrap);
+    shortcutListContainer.appendChild(row);
+  }
+}
+
+function startRecording(row, keyBox, conflictMsg, id) {
+  // 取消之前的录制
+  if (recordingRow && recordingRow !== row) cancelRecording();
+  
+  recordingRow = row;
+  keyBox.classList.add('recording');
+  keyBox.querySelector('span').textContent = '按下组合键...';
+  conflictMsg.classList.remove('show');
+  keyBox.classList.remove('conflict');
+}
+
+function cancelRecording() {
+  if (!recordingRow) return;
+  const keyBox = recordingRow.querySelector('.shortcut-key-box');
+  const id = recordingRow.dataset.id;
+  keyBox.classList.remove('recording');
+  keyBox.querySelector('span').textContent = comboToString(shortcuts[id].combo);
+  recordingRow = null;
+}
+
+function handleRecording(e) {
+  // 忽略单独的修饰键
+  if (['Control','Shift','Alt','Meta'].includes(e.key)) return;
+
+  const id = recordingRow.dataset.id;
+  const keyBox = recordingRow.querySelector('.shortcut-key-box');
+  const conflictMsg = recordingRow.querySelector('.shortcut-conflict-msg');
+
+  const combo = {
+    ctrl: e.ctrlKey || e.metaKey,
+    shift: e.shiftKey,
+    alt: e.altKey,
+    key: e.key === ' ' ? 'space' : e.key.toLowerCase()
+  };
+
+  const conflict = checkConflict(id, combo);
+
+  if (conflict) {
+    keyBox.classList.add('conflict');
+    keyBox.classList.remove('recording');
+    keyBox.querySelector('span').textContent = comboToString(combo);
+    conflictMsg.textContent = '⚠ ' + conflict;
+    conflictMsg.classList.add('show');
+    // 不保存，但结束录制
+    recordingRow = null;
+    return;
+  }
+
+  // 有效快捷键
+  shortcuts[id].combo = combo;
+  keyBox.classList.remove('recording', 'conflict');
+  keyBox.querySelector('span').textContent = comboToString(combo);
+  conflictMsg.classList.remove('show');
+  recordingRow = null;
+}
+
+btnSettings.addEventListener('click', () => settingsModal.classList.add('open'));
+settingsClose.addEventListener('click', () => {
+  if (recordingRow) cancelRecording();
+  settingsModal.classList.remove('open');
+});
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) {
+    if (recordingRow) cancelRecording();
+    settingsModal.classList.remove('open');
+  }
+});
+
+shortcutSave.addEventListener('click', () => {
+  // 检查所有是否有冲突标记
+  const conflicts = shortcutListContainer.querySelectorAll('.shortcut-conflict-msg.show');
+  if (conflicts.length > 0) {
+    showToast('存在 ' + conflicts.length + ' 个冲突，请先解决');
+    return;
+  }
+  // 检查快捷键之间的重复
+  const seen = {};
+  for (const id in shortcuts) {
+    const key = comboToKey(shortcuts[id].combo);
+    if (seen[key]) {
+      showToast('「' + shortcuts[id].label + '」与「' + seen[key] + '」重复');
+      return;
+    }
+    seen[key] = shortcuts[id].label;
+  }
+  saveShortcuts();
+  settingsModal.classList.remove('open');
+  showToast('快捷键已保存');
+});
+
+shortcutReset.addEventListener('click', () => {
+  shortcuts = JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+  saveShortcuts();
+  buildShortcutList();
+  showToast('已恢复默认快捷键');
+});
+
+buildShortcutList();
+
+// ========== Toast ==========
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ========== 初始化 ==========
+input.focus();
+</script>
+
+</body>
+</html>
